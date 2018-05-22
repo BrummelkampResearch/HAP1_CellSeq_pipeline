@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+########################
+#    hasg_GeneRef.sh   #
+########################
+# Script to modify the GeneRef file for enrichement with an MD5 sum
+# The rationale to create a GeneRef file with MD5 hashed is that none
+# of the columns is unique, and uniqueness a neccesity for integration
+# in a SQL database where the individual datapoints of a screen are
+# saved in a separate table than the genes themselves. Even the colulmn
+# of genename isn't unique. The MD5 has is calculated over the entiry
+# row of every entry in GeneRef is is therefore a unique identifier.
+# When uploading the final_results_file into django, the MD5 sum is used
+# to link the datapoint to the correct Gene.
+#########################
+#########################
+# Author: Elmer Stickel
+# Contact: e.stickel@gmail.com
+# Date: 19 Sept 2015
+# NKI-AvL Dutch Cancer Institute,
+# B8 Biochemstry Division, Brummelkamp Lab
+#########################
+
+# Input file should look like this
+# The content of the columns is as follows: chrom;startposition of gene; endposition of gene; gene name; a zero that isn't used anymore; the orientation
+# chr1	123043	124873	MAPKK	0	+
+
+
+# Count the number of input lines (assuming no header)
+count=$(wc -l $1 | awk '{print $1}')
+# Remove any old hashed file from the current directory
+if [ -f $1.hased ];
+then
+	read -p "$1.hashed already present. Overwrite? " -n 1 -r
+	if [[ $REPLY =~ ^[Yy]$ ]]
+		then
+    			rm $1.hashed
+	else
+		printf "Exiting now. Bye!\n"
+		exit
+	fi
+fi
+
+if [ -f $1.for_django ];
+then
+        read -p "$1.for_django already present. Overwrite? " -n 1 -r
+        if [[ $REPLY =~ ^[Yy]$ ]]
+                then
+                        rm $1.for_django
+        else
+                printf "Exiting now. Bye!\n"
+                exit
+        fi
+fi
+
+if [ -f for_django.csv ];
+then
+        read -p "for_django.csv already present. Overwrite? " -n 1 -r
+        if [[ $REPLY =~ ^[Yy]$ ]]
+                then
+                        rm for_django.csv
+        else
+                printf "Exiting now. Bye!\n"
+                exit
+        fi
+fi
+touch $1.hashed
+touch $1.for_django.tmp
+printf "\nBuilding a hashed GeneRef file for tagCount and Djano input...\n"
+for i in $(seq 1 $count);
+do
+#	printf "current line:\t"
+#	awk -v line=$i '{if(FNR==line) print $0}' $1
+	hash=$(awk -v line=$i '{if(FNR==line) print $0}' $1 | md5sum | awk '{print $1}')
+#	printf "hash is $hash\n"
+	awk -v hash=$hash -v line=$i '{if(FNR==line)print $1"\t"$2"\t"$3"\t"$4"HASHSEPARATOR"hash"\t"$5"\t"$6}' $1 >> $1.hashed
+        awk -v hash=$hash -v line=$i '{if(FNR==line)print ","hash","$1","$2","$3","$4","$6",desc_not_yet_available"}' $1 >> $1.for_django.tmp
+	done
+
+awk -F"," '{sub(/^\chr/, "", $3); print $1","$2","$3","$4","$5","$6","$7}' $1.for_django.tmp  > $1.for_django.tmp2
+echo "id,md5,chromosome,startpos,endpos,name,orientation,description" > header
+cat header $1.for_django.tmp2 > for_django.csv
+rm header
+rm $1.for_django.tmp
+rm $1.for_django.tmp2
+printf "Done"

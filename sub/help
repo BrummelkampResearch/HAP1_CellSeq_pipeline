@@ -1,0 +1,21 @@
+
+Usage: ./full_intracellular_fixed_analysis.sh [OPTIONS] -l=FILENAME -h=FILENAME -n=NAME
+
+Option		GNU long option		Meaning
+-h, -?		-- help			display help
+-L 		--low			followed by full path to fastq file of 5% lower sample (required unless -c is used)
+-H		--high			followed by full path to fastq file of 5% higher sample (required unless -c is used)
+-N		--screenname		any name you like for the screenname, as long as you havent used it before (required unless -c is used)
+-U		--uncompressed		skip final compression of intermediate files created  (not required)
+-C		--compress		to run script in compress only mode, followed by full path the directory where data is located (cannot be used in conjuction with any other parameter)
+-V      --version       print the version of the pipeline
+
+--- Examples ---
+Standard run, with compression of intermediate files:
+./full_intracellular_fixed_analysis.sh --low=/data/low.fastq.gz --high=/data/high.fastq.gz --name=screenname
+
+Standard run, no compression
+./full_intracellular_fixed_analysis.sh -U --low=/data/low.fastq.gz --high=/data/hight.fastq.gz --name=screenname
+
+Compression of already existing output files
+./full_intracellular_fixed_analysis.sh -C=/data/screenname

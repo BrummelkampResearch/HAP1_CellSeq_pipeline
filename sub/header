@@ -1,0 +1,11 @@
+##
+##
+## Output file from haploid Screen analysis script taqCount.sh
+##
+## Low=number of mutations in gene in 5% lowest samples, LT=LowTotal (total number of mutations low sample)
+## HT=HighTotal, Pv=Fisher exact P-value, FCPv=FDR Corrected P-value
+## LC=Low Corrected (for zeros), LTC=Low Total Corrected (for zeros)
+## HC=High Corrected, HTC=High Total Corrected, MI=mutation index (HC/HTC)/(LC/LTC)
+##
+##
+Gene	Low	LT	High	HT	Pv	FCPv	LC	LTC	HC	HTC	MI

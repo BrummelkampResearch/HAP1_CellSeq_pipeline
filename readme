@@ -1,0 +1,92 @@
+*********************************
+***	       README	      ***
+*********************************
+
+Brief overview:
+------------------
+taqcount.sh is a bash script to process the Illumia sequencing data from fixed haploid screens. The input 
+for the program are the two fastq files, either decompressed or gzipped. The final result is a tab separated tables
+files containing the number of unique mutations in every gene and for both samples. A fisher exact test is used to compare
+the numbers and significance between the two samples. The file can be imported into Prism or other visualization software
+for plotting the fixed screen graph.
+
+Dependencies:
+------------------
+- perl5
+- bowtie (tested on v0.12.7 64-bit)
+- intersectBed (tested on v2.11.1)
+- R
+- pigz (not required but allows for faster compression of intermediate files by using multiple cores, compared to gzip)
+
+
+
+
+- Changed command line arguments
+	-L=|--low=, -H=|--high=, -N=|--screenname=, -C=|--compress, -h|-?|--help, -U|--uncompressed
+- Changed compress_output.sh
+	- Added ability to compress using pigz
+	- Extended the list of filenames to be compressed (if the input fastq was already gzipped, the output filenames also contain a .gz and these did get zipped)
+	- Changed some intermediate printf comments to make the pipeline more logic and comments that results can be viewed while still working on compression
+- Changed compression if-statements created on 24th and added a help section
+	#########################
+	# In compress only mode, solely old results are compressed and theres no need to continue execution of the script
+	# Same for --help of course
+	if [[ $COMPRESS =~ "/" ]]
+   	     then
+        	        bash sub/compress_output.sh $COMPRESS # Script to compress output files
+               	 exit
+	fi
+	if [[ $HELP == "yes" ]]
+       		then
+                	cat sub/help
+                	exit
+	fi
+	########################
+
+	########################
+	if [[ $COMPRESS != "NO" ]]
+        	then
+                	printf "\n Analysis completed. Feel free to peek in the results files while I'll keep working on compressing the intermediate files for a little longer.\n"
+  	              	pwd=$(pwd)
+        	        out_dir="$pwd/$OUT/"
+     	           	bash sub/compress_output.sh $out_dir
+   		else
+        	        printf "\nSkipping compression of intermediate files"
+	fi
+	########################
+
+
+25/8/2015
+- Found a bug: if the GeneRef file contains a string of hashes, the R-script makes an error on calling the right collumns. Make sure there are no
+  hashes in the GeneRef file.
+- Changed the following line in sub/GeneRef_hg19_uniq-s_last_try_delim_cat_final.bed
+	chrX	49188093	49313710	GAGE-LOCUS	0	+
+	(GAGE-LOCUS used to be ####.....#####)
+- Created a help file that can be accessed by ./tagCount --help or -h or -?
+
+24/8/2015
+- Added the ability to compress output files
+- Added 2 if statements to taqcount.sh
+	- 	First statement allows for compressing the data of an already performed run by running the
+		script ./taqcount.sh -cr /full/path/to/output_folder (-compout stands for compress output)
+		************
+		if [[ $0 == "-compout" ]]
+		then
+			bash sub/compress_output.sh $2 # Script to compress output files
+			exit
+		fi
+		************
+
+	-	Second statement allows for automatic compression of output results
+		************
+		if [[ $4 == "-cr" ]]
+		then
+			prinf "\n Compressing intermediate output files...\n"
+			sub/compress_output.sh $3
+		fi
+		************
+- Created addition bash script to compress file
+	sub/compress_output.sh
+
+
+
